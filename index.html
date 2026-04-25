@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Seyna — Ton IA Vivante</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Seyna">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#070711">
+<meta name="description" content="Seyna — Ton IA personnelle, intelligente et vivante">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;600;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,600;1,300;1,600&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #070711;
+  --s1: #0f0f1f;
+  --s2: #161628;
+  --s3: #1e1e35;
+  --border: rgba(120,100,255,0.12);
+  --border2: rgba(120,100,255,0.25);
+  --a1: #7b5fff;
+  --a2: #ff5fa0;
+  --a3: #5fffcf;
+  --a4: #ffca5f;
+  --text: #ddd8ff;
+  --muted: #7070a0;
+  --font: 'Outfit', sans-serif;
+  --font2: 'Cormorant Garamond', serif;
+  --mono: 'JetBrains Mono', monospace;
+  --glow-a: 0 0 40px rgba(123,95,255,0.3);
+  --glow-b: 0 0 40px rgba(255,95,160,0.3);
+  --r: 18px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{height:100%;height:100dvh}
+body{height:100%;height:100dvh;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--font);cursor:none}
+#setup{overflow-y:auto!important;-webkit-overflow-scrolling:touch}
+.setup-wrap{padding-bottom:80px}
+.glass-card{overflow-y:visible!important;max-height:none!important}
+#app{height:100%;height:100dvh}
+.chat-area{min-height:0;overflow:hidden}
+.msgs{-webkit-overflow-scrolling:touch}
+.input-zone{flex-shrink:0;position:sticky;bottom:0;padding-bottom:max(14px,env(safe-area-inset-bottom));z-index:10}
+@media(max-width:600px){body{cursor:auto}.cursor,.cursor-ring{display:none}}
+
+/* CUSTOM CURSOR */
+.cursor{position:fixed;width:12px;height:12px;border-radius:50%;background:var(--a1);pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .2s,height .2s,background .2s;mix-blend-mode:screen}
+.cursor-ring{position:fixed;width:36px;height:36px;border-radius:50%;border:1px solid rgba(123,95,255,0.4);pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:all .12s ease}
+
+/* CANVAS BG */
+#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.6}
+
+/* SETUP */
+#setup{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 30% 40%,rgba(123,95,255,.12),transparent 60%),radial-gradient(ellipse at 70% 60%,rgba(255,95,160,.08),transparent 60%),var(--bg);padding:20px;transition:opacity .7s,transform .7s}
+#setup.out{opacity:0;transform:scale(1.04);pointer-events:none}
+.setup-wrap{width:100%;max-width:500px}
+.setup-brand{text-align:center;margin-bottom:32px}
+.brand-orb{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--a1),var(--a2));margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;animation:orb-float 4s ease-in-out infinite;box-shadow:var(--glow-a)}
+@keyframes orb-float{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-10px) rotate(5deg)}}
+.brand-name{font-family:var(--font2);font-size:2rem;font-style:italic;background:linear-gradient(135deg,var(--a1),var(--a2),var(--a3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:2px}
+.brand-sub{color:var(--muted);font-size:.85rem;margin-top:4px;letter-spacing:1px}
+.glass-card{background:rgba(15,15,31,.85);border:1px solid var(--border2);border-radius:24px;padding:32px;backdrop-filter:blur(30px);box-shadow:0 30px 80px rgba(0,0,0,.6),var(--glow-a)}
+.step{display:none;animation:step-in .4s ease}
+.step.on{display:block}
+@keyframes step-in{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.step-tag{font-size:.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--a1);margin-bottom:6px;font-family:var(--mono)}
+.step-q{font-family:var(--font2);font-size:1.3rem;font-style:italic;margin-bottom:4px}
+.step-hint{color:var(--muted);font-size:.82rem;margin-bottom:20px}
+.inp{width:100%;padding:14px 18px;background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:12px;color:var(--text);font-family:var(--font);font-size:1rem;outline:none;transition:border-color .3s,box-shadow .3s}
+.inp:focus{border-color:var(--a1);box-shadow:0 0 0 3px rgba(123,95,255,.15)}
+.inp::placeholder{color:var(--muted)}
+.mode-g{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mc{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:14px;padding:14px;cursor:pointer;transition:all .25s;text-align:center;position:relative;overflow:hidden}
+.mc::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--a1),var(--a2));opacity:0;transition:opacity .25s}
+.mc:hover{border-color:var(--a1);transform:translateY(-2px)}
+.mc.on{border-color:var(--a1);background:rgba(123,95,255,.12);box-shadow:0 0 20px rgba(123,95,255,.2)}
+.mc .me{font-size:1.6rem;display:block;margin-bottom:6px;position:relative;z-index:1}
+.mc .ml{font-size:.82rem;font-weight:600;position:relative;z-index:1}
+.mc .md{font-size:.7rem;color:var(--muted);margin-top:3px;position:relative;z-index:1}
+.mc .check{position:absolute;top:8px;right:8px;width:18px;height:18px;border-radius:50%;background:var(--a1);color:#fff;font-size:.7rem;display:none;align-items:center;justify-content:center}
+.mc.on .check{display:flex}
+.add-custom{width:100%;padding:11px;background:transparent;border:1px dashed var(--border2);border-radius:12px;color:var(--muted);font-family:var(--font);font-size:.82rem;cursor:pointer;transition:all .25s;margin-top:8px}
+.add-custom:hover{border-color:var(--a1);color:var(--a1)}
+.cform{display:none;gap:8px;margin-top:8px}
+.cform.on{display:flex}
+.voice-list{display:flex;flex-direction:column;gap:8px}
+.vc{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:12px 16px;cursor:pointer;transition:all .25s;display:flex;align-items:center;gap:12px}
+.vc:hover,.vc.on{border-color:var(--a1);background:rgba(123,95,255,.08)}
+.vc .vi{font-size:1.2rem}
+.vc .vn{font-size:.85rem;font-weight:600}
+.vc .vd{font-size:.72rem;color:var(--muted)}
+.btn-main{width:100%;padding:15px;background:linear-gradient(135deg,var(--a1),var(--a2));border:none;border-radius:14px;color:#fff;font-family:var(--font);font-size:.95rem;font-weight:700;cursor:pointer;margin-top:20px;transition:all .3s;letter-spacing:.5px}
+.btn-main:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(123,95,255,.4)}
+.btn-back{background:transparent;border:1px solid var(--border2);color:var(--muted);margin-top:8px}
+.btn-back:hover{transform:none;box-shadow:none;background:rgba(255,255,255,.03)}
+.progress{display:flex;gap:6px;justify-content:center;margin-bottom:24px}
+.pr-dot{width:8px;height:8px;border-radius:4px;background:var(--border2);transition:all .4s}
+.pr-dot.on{background:var(--a1);width:24px;box-shadow:0 0 10px var(--a1)}
+
+/* MAIN APP */
+#app{display:none;height:100vh;flex-direction:column;position:relative;z-index:1}
+#app.on{display:flex}
+
+/* SIDEBAR */
+.layout{display:flex;flex:1;overflow:hidden}
+.sidebar{width:260px;background:rgba(10,10,22,.9);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;backdrop-filter:blur(20px);transition:width .3s}
+.sidebar.collapsed{width:0;overflow:hidden}
+@media(max-width:700px){.sidebar{display:none}}
+.sb-head{padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+.sb-ai{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.sb-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;transition:all .4s}
+.sb-name{font-family:var(--font2);font-style:italic;font-size:1.1rem}
+.sb-status{font-size:.72rem;color:var(--muted);margin-top:2px}
+.sb-section{padding:12px 16px}
+.sb-label{font-size:.68rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;font-family:var(--mono)}
+.sb-btn{width:100%;padding:10px 12px;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--muted);font-family:var(--font);font-size:.82rem;cursor:pointer;transition:all .25s;text-align:left;display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.sb-btn:hover,.sb-btn.on{border-color:var(--a1);color:var(--text);background:rgba(123,95,255,.08)}
+.sb-mode-list{display:flex;flex-direction:column;gap:4px}
+.sb-mode{padding:9px 12px;border-radius:10px;cursor:pointer;transition:all .25s;display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--muted)}
+.sb-mode:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.sb-mode.on{background:rgba(123,95,255,.15);color:var(--text);border:1px solid rgba(123,95,255,.3)}
+.sb-mood{padding:12px}
+.mood-label{font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;font-family:var(--mono)}
+.mood-bar{height:4px;border-radius:2px;background:var(--border);margin-bottom:4px;overflow:hidden}
+.mood-fill{height:100%;border-radius:2px;transition:width 1s ease;background:linear-gradient(90deg,var(--a1),var(--a3))}
+.mood-name{font-size:.75rem;color:var(--muted);display:flex;justify-content:space-between}
+.sb-memory{padding:12px 16px;border-top:1px solid var(--border)}
+.mem-item{font-size:.75rem;color:var(--muted);padding:6px 10px;background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:4px;border-left:2px solid var(--a1)}
+
+/* MAIN CHAT */
+.chat-area{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.chat-header{display:flex;align-items:center;gap:12px;padding:14px 20px;background:rgba(10,10,22,.8);border-bottom:1px solid var(--border);backdrop-filter:blur(20px)}
+.toggle-sb{background:none;border:1px solid var(--border);border-radius:8px;padding:7px 10px;cursor:pointer;color:var(--muted);font-size:1rem;transition:all .25s}
+.toggle-sb:hover{border-color:var(--a1);color:var(--a1)}
+.head-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;transition:all .4s;position:relative}
+.head-avatar .live-dot{position:absolute;bottom:1px;right:1px;width:10px;height:10px;border-radius:50%;background:#4ade80;border:2px solid var(--bg);animation:live-pulse 2s ease infinite}
+@keyframes live-pulse{0%,100%{box-shadow:0 0 0 0 rgba(74,222,128,.4)}50%{box-shadow:0 0 0 5px rgba(74,222,128,0)}}
+.head-info{flex:1}
+.head-name{font-family:var(--font2);font-style:italic;font-size:1.05rem;letter-spacing:.5px}
+.head-sub{font-size:.72rem;color:var(--muted);margin-top:1px}
+.head-actions{display:flex;gap:6px}
+.ha-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:7px 10px;cursor:pointer;color:var(--muted);font-size:.95rem;transition:all .25s;position:relative}
+.ha-btn:hover{border-color:var(--a1);color:var(--a1)}
+.ha-btn .badge{position:absolute;top:-4px;right:-4px;background:var(--a2);border-radius:50%;width:14px;height:14px;font-size:.55rem;display:flex;align-items:center;justify-content:center;color:#fff}
+
+/* MESSAGES */
+.msgs{flex:1;overflow-y:auto;padding:24px 20px;display:flex;flex-direction:column;gap:18px}
+.msgs::-webkit-scrollbar{width:3px}
+.msgs::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;text-align:center;animation:fade-up .8s ease}
+@keyframes fade-up{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.w-avatar{width:90px;height:90px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2.2rem;margin:0 auto 20px;animation:orb-float 4s ease-in-out infinite}
+.w-title{font-family:var(--font2);font-size:1.8rem;font-style:italic;margin-bottom:8px}
+.w-sub{color:var(--muted);font-size:.9rem;line-height:1.7;max-width:360px}
+.emotion-strip{display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+.emo-btn{padding:8px 16px;border-radius:20px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--muted);font-size:.8rem;cursor:pointer;transition:all .25s}
+.emo-btn:hover{border-color:var(--a1);color:var(--text);background:rgba(123,95,255,.1)}
+.qp-grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px;max-width:500px}
+.qp{padding:8px 14px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--muted);font-size:.78rem;cursor:pointer;transition:all .25s;text-align:left}
+.qp:hover{border-color:var(--a2);color:var(--text);background:rgba(255,95,160,.08)}
+.msg{display:flex;gap:10px;max-width:78%;animation:msg-in .35s ease}
+@keyframes msg-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{align-self:flex-end;flex-direction:row-reverse}
+.msg.ai{align-self:flex-start}
+.m-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;align-self:flex-end}
+.msg.ai .m-av{transition:all .4s}
+.msg.user .m-av{background:rgba(255,255,255,.08);border:1px solid var(--border)}
+.m-body{}
+.m-bubble{padding:13px 17px;border-radius:18px;line-height:1.65;font-size:.9rem}
+.msg.user .m-bubble{background:linear-gradient(135deg,rgba(123,95,255,.22),rgba(255,95,160,.14));border:1px solid rgba(123,95,255,.28);border-bottom-right-radius:4px}
+.msg.ai .m-bubble{background:var(--s2);border:1px solid var(--border);border-bottom-left-radius:4px}
+.m-meta{font-size:.68rem;color:var(--muted);margin-top:5px;display:flex;align-items:center;gap:8px}
+.m-speak{background:none;border:none;cursor:pointer;color:var(--muted);font-size:.85rem;padding:2px;transition:color .2s}
+.m-speak:hover{color:var(--a1)}
+.m-copy{background:none;border:none;cursor:pointer;color:var(--muted);font-size:.75rem;padding:2px;transition:color .2s}
+.m-copy:hover{color:var(--a3)}
+.m-react{display:flex;gap:4px;margin-top:6px}
+.react-btn{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;padding:3px 8px;font-size:.78rem;cursor:pointer;transition:all .2s}
+.react-btn:hover{border-color:var(--a2);transform:scale(1.1)}
+.typing-wrap{display:flex;gap:10px;align-self:flex-start}
+.typing-bub{padding:13px 18px;background:var(--s2);border:1px solid var(--border);border-radius:18px;border-bottom-left-radius:4px;display:flex;gap:5px;align-items:center}
+.td{width:7px;height:7px;border-radius:50%;background:var(--a1);animation:td-bounce 1.1s ease-in-out infinite}
+.td:nth-child(2){animation-delay:.18s}
+.td:nth-child(3){animation-delay:.36s}
+@keyframes td-bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-8px)}}
+
+/* EMOTION AURA */
+.mood-aura{position:fixed;inset:0;pointer-events:none;z-index:0;transition:all 1.5s ease;opacity:.06}
+
+/* INPUT */
+.input-zone{padding:14px 20px;background:rgba(10,10,22,.9);border-top:1px solid var(--border);backdrop-filter:blur(20px)}
+.input-wrap{display:flex;align-items:flex-end;gap:8px;background:var(--s2);border:1px solid var(--border2);border-radius:20px;padding:8px 8px 8px 18px;transition:border-color .3s,box-shadow .3s}
+.input-wrap:focus-within{border-color:var(--a1);box-shadow:0 0 0 3px rgba(123,95,255,.12)}
+#ti{flex:1;background:none;border:none;outline:none;color:var(--text);font-family:var(--font);font-size:.92rem;resize:none;max-height:130px;min-height:22px;line-height:1.55;padding:4px 0}
+#ti::placeholder{color:var(--muted)}
+.input-btns{display:flex;gap:6px;align-items:center}
+.ib{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.05);border:1px solid var(--border);cursor:pointer;color:var(--muted);font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all .25s;flex-shrink:0}
+.ib:hover{border-color:var(--a1);color:var(--a1)}
+.ib.rec{background:rgba(255,80,80,.15);border-color:#ff5050;color:#ff5050;animation:rec-glow .7s ease-in-out infinite alternate}
+@keyframes rec-glow{from{box-shadow:0 0 0 rgba(255,80,80,0)}to{box-shadow:0 0 16px rgba(255,80,80,.5)}}
+.send-ib{background:linear-gradient(135deg,var(--a1),var(--a2));border:none;color:#fff}
+.send-ib:hover{transform:scale(1.1);box-shadow:0 4px 18px rgba(123,95,255,.45);border-color:transparent}
+.vs{text-align:center;font-size:.72rem;color:var(--muted);margin-top:8px;min-height:14px;transition:color .3s}
+.vs.on{color:var(--a2)}
+
+/* PANELS */
+.panel{position:fixed;top:0;right:-100%;width:320px;max-width:100%;height:100%;background:rgba(10,10,22,.97);border-left:1px solid var(--border2);z-index:200;transition:right .4s ease;overflow-y:auto;padding:24px 20px;backdrop-filter:blur(30px)}
+.panel.open{right:0}
+.panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.panel-title{font-family:var(--font2);font-style:italic;font-size:1.2rem}
+.panel-close{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer;color:var(--muted);transition:all .2s}
+.panel-close:hover{border-color:var(--a2);color:var(--a2)}
+.journal-entry{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
+.je-date{font-size:.7rem;color:var(--a1);font-family:var(--mono);margin-bottom:6px}
+.je-mode{font-size:.72rem;color:var(--muted);margin-bottom:8px}
+.je-text{font-size:.82rem;line-height:1.6;color:var(--text)}
+.mem-list{display:flex;flex-direction:column;gap:6px}
+.mem-card{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;align-items:flex-start;gap:10px}
+.mem-card .mi{font-size:1rem;flex-shrink:0}
+.mem-card .mt{font-size:.8rem;color:var(--text);line-height:1.5}
+.mem-card .md2{font-size:.7rem;color:var(--muted);margin-top:3px}
+.del-mem{background:none;border:none;cursor:pointer;color:var(--muted);margin-left:auto;flex-shrink:0;font-size:.8rem;padding:3px}
+.del-mem:hover{color:var(--a2)}
+
+/* TOAST */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--s2);border:1px solid var(--a1);padding:10px 20px;border-radius:20px;font-size:.82rem;z-index:300;opacity:0;transition:opacity .3s;backdrop-filter:blur(20px);white-space:nowrap}
+.toast.on{opacity:1}
+
+/* AMBIENT SOUND */
+.ambient-ctrl{position:fixed;bottom:80px;right:16px;z-index:100}
+.amb-btn{width:36px;height:36px;border-radius:50%;background:var(--s2);border:1px solid var(--border);cursor:pointer;color:var(--muted);font-size:.9rem;display:flex;align-items:center;justify-content:center;transition:all .25s}
+.amb-btn:hover{border-color:var(--a1);color:var(--a1)}
+
+/* SPEAKING ANIMATION */
+.speaking .head-avatar{animation:speak-av .5s ease-in-out infinite alternate}
+@keyframes speak-av{from{box-shadow:0 0 10px rgba(123,95,255,.3)}to{box-shadow:0 0 30px rgba(123,95,255,.8);transform:scale(1.08)}}
+
+/* MOOD THEMES */
+body.mood-joy{--a1:#ffca5f;--a2:#ff855f}
+body.mood-love{--a1:#ff5fa0;--a2:#ff8fb5}
+body.mood-calm{--a1:#5fffcf;--a2:#5fa0ff}
+body.mood-mystic{--a1:#a05fff;--a2:#5f5fff}
+body.mood-energy{--a1:#ff5f5f;--a2:#ff5fa0}
+body.mood-focus{--a1:#5faaff;--a2:#5fffcf}
+
+@media(max-width:600px){
+  .msg{max-width:92%}
+  .panel{width:100%}
+}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div class="cursor" id="cur"></div>
+<div class="cursor-ring" id="cur-ring"></div>
+<div class="mood-aura" id="mood-aura"></div>
+
+<!-- ============ SETUP ============ -->
+<div id="setup">
+<div class="setup-wrap">
+  <div class="setup-brand">
+    <div class="brand-orb" id="setup-orb">🌟</div>
+    <div class="brand-name">Ton IA Vivante</div>
+    <div class="brand-sub">Intelligente · Émotionnelle · Personnalisée</div>
+  </div>
+  <div class="glass-card">
+    <div class="progress">
+      <div class="pr-dot on" id="pd1"></div>
+      <div class="pr-dot" id="pd2"></div>
+      <div class="pr-dot" id="pd3"></div>
+      <div class="pr-dot" id="pd4"></div>
+    </div>
+
+    <!-- STEP 1 : Prénom IA -->
+    <div class="step on" id="s1">
+      <div class="step-tag">Étape 1 / 4 — Identité</div>
+      <div class="step-q">Quel prénom vas-tu lui donner ?</div>
+      <div class="step-hint">Elle s'appellera ainsi, et c'est son identité unique pour toi.</div>
+      <input class="inp" id="inp-name" placeholder="Luna, Aria, Jade, Alex, Nova..." maxlength="20">
+      <button class="btn-main" onclick="s1next()">Continuer →</button>
+    </div>
+
+    <!-- STEP 2 : Ton prénom -->
+    <div class="step" id="s2">
+      <div class="step-tag">Étape 2 / 4 — Toi</div>
+      <div class="step-q">Et toi, comment tu t'appelles ?</div>
+      <div class="step-hint">Elle t'appellera par ton prénom, comme une vraie personne.</div>
+      <input class="inp" id="inp-user" placeholder="Ton prénom..." maxlength="20">
+      <button class="btn-main" onclick="s2next()">Continuer →</button>
+      <button class="btn-main btn-back" onclick="sGo(1)">← Retour</button>
+    </div>
+
+    <!-- STEP 3 : Modes -->
+    <div class="step" id="s3">
+      <div class="step-tag">Étape 3 / 4 — Personnalités</div>
+      <div class="step-q">Qui veux-tu qu'elle soit ?</div>
+      <div class="step-hint">Plusieurs choix possibles — tu pourras switcher en live à tout moment.</div>
+      <div class="mode-g" id="mode-grid">
+        <div class="mc on" data-m="ami" onclick="toggleM(this)"><div class="check">✓</div><span class="me">🤝</span><div class="ml">Ami(e) proche</div><div class="md">Chaleureux, drôle, sincère</div></div>
+        <div class="mc on" data-m="amour" onclick="toggleM(this)"><div class="check">✓</div><span class="me">💕</span><div class="ml">Coach Amoureux</div><div class="md">Relations, cœur, séduction</div></div>
+        <div class="mc on" data-m="pro" onclick="toggleM(this)"><div class="check">✓</div><span class="me">💼</span><div class="ml">Collègue Pro</div><div class="md">Travail, productivité, mails</div></div>
+        <div class="mc on" data-m="voyante" onclick="toggleM(this)"><div class="check">✓</div><span class="me">🔮</span><div class="ml">Voyante Mystique</div><div class="md">Énergie, univers, intuition</div></div>
+        <div class="mc" data-m="coach" onclick="toggleM(this)"><div class="check">✓</div><span class="me">🌟</span><div class="ml">Coach de Vie</div><div class="md">Objectifs, mindset, croissance</div></div>
+        <div class="mc" data-m="sport" onclick="toggleM(this)"><div class="check">✓</div><span class="me">💪</span><div class="ml">Coach Sportif</div><div class="md">Fitness, nutrition, perf</div></div>
+        <div class="mc" data-m="psy" onclick="toggleM(this)"><div class="check">✓</div><span class="me">🧠</span><div class="ml">Psychologue</div><div class="md">Écoute, émotions, bien-être</div></div>
+        <div class="mc" data-m="creative" onclick="toggleM(this)"><div class="check">✓</div><span class="me">🎨</span><div class="ml">Créatif·ve</div><div class="md">Art, écriture, idées folles</div></div>
+      </div>
+      <button class="add-custom" onclick="toggleCF()">+ Ajouter un mode personnalisé</button>
+      <div class="cform" id="cform">
+        <input class="inp" id="ce" placeholder="🎵" maxlength="2" style="width:52px;text-align:center;padding:10px">
+        <input class="inp" id="cl" placeholder="Ex: Coach musique...">
+        <button class="btn-main" style="width:auto;padding:10px 14px;margin:0" onclick="addCM()">+</button>
+      </div>
+      <button class="btn-main" onclick="s3next()">Continuer →</button>
+      <button class="btn-main btn-back" onclick="sGo(2)">← Retour</button>
+    </div>
+
+    <!-- STEP 4 : Voix -->
+    <div class="step" id="s4">
+      <div class="step-tag">Étape 4 / 4 — Voix</div>
+      <div class="step-q">Choisis la voix de ton IA</div>
+      <div class="step-hint">Elle te parlera avec cette voix en mode vocal.</div>
+      <div class="voice-list" id="voice-list">
+        <div class="vc on" data-vi="-1"><span class="vi">🎙️</span><div><div class="vn">Voix système par défaut</div><div class="vd">Automatique</div></div></div>
+      </div>
+      <button class="btn-main" onclick="launch()">✦ Lancer mon IA</button>
+      <button class="btn-main btn-back" onclick="sGo(3)">← Retour</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app">
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sb-head">
+      <div class="sb-ai">
+        <div class="sb-avatar" id="sb-avatar">🌟</div>
+        <div>
+          <div class="sb-name" id="sb-name">Luna</div>
+          <div class="sb-status" id="sb-status">● En ligne</div>
+        </div>
+      </div>
+      <div class="sb-section" style="padding:0">
+        <div class="sb-label">Modes actifs</div>
+        <div class="sb-mode-list" id="sb-modes"></div>
+      </div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-label">Actions</div>
+      <button class="sb-btn" onclick="openJournal()">📔 Journal des conversations</button>
+      <button class="sb-btn" onclick="openMemory()">🧠 Mémoire & Infos sur toi</button>
+      <button class="sb-btn" onclick="clearChat()">🗑 Nouvelle conversation</button>
+      <button class="sb-btn" onclick="resetAll()">⚙ Reconfigurer l'IA</button>
+    </div>
+    <div class="sb-mood" id="sb-mood">
+      <div class="mood-label">Ambiance détectée</div>
+      <div class="mood-bar"><div class="mood-fill" id="mf" style="width:60%"></div></div>
+      <div class="mood-name"><span id="mood-left">Neutre</span><span id="mood-right">60%</span></div>
+    </div>
+    <div class="sb-memory" id="sb-mem-preview"></div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="chat-area">
+    <div class="chat-header">
+      <button class="toggle-sb" onclick="toggleSB()" title="Menu">☰</button>
+      <div class="head-avatar" id="head-av">🌟<div class="live-dot"></div></div>
+      <div class="head-info">
+        <div class="head-name" id="head-name">Luna</div>
+        <div class="head-sub" id="head-sub">Mode : Ami(e) proche · Prête à t'écouter</div>
+      </div>
+      <div class="head-actions">
+        <button class="ha-btn" onclick="openJournal()" title="Journal">📔</button>
+        <button class="ha-btn" onclick="openMemory()" title="Mémoire">🧠</button>
+        <button class="ha-btn" id="speak-toggle" onclick="toggleAutoSpeak()" title="Vocal auto">🔊</button>
+      </div>
+    </div>
+
+    <div class="msgs" id="msgs">
+      <div class="welcome" id="welcome">
+        <div class="w-avatar" id="w-av">🌟</div>
+        <div class="w-title" id="w-title">Bonjour !</div>
+        <div class="w-sub" id="w-sub">Je suis là pour toi, en texte ou en vocal. Parle-moi comme à une vraie personne 💜</div>
+        <div class="emotion-strip">
+          <button class="emo-btn" onclick="sendEmo('Je me sens bien aujourd\'hui 😊')">😊 Je me sens bien</button>
+          <button class="emo-btn" onclick="sendEmo('J\'ai besoin de parler...')">💬 J\'ai besoin de parler</button>
+          <button class="emo-btn" onclick="sendEmo('J\'ai une question')">❓ J\'ai une question</button>
+          <button class="emo-btn" onclick="sendEmo('Surprends-moi !')">✨ Surprends-moi</button>
+        </div>
+        <div class="qp-grid" id="qp-grid"></div>
+      </div>
+    </div>
+
+    <div class="input-zone">
+      <div class="input-wrap">
+        <textarea id="ti" placeholder="Écris ton message..." rows="1" onkeydown="handleK(event)" oninput="autoR(this)"></textarea>
+        <div class="input-btns">
+          <button class="ib" id="vbtn" onclick="toggleRec()" title="Vocal">🎤</button>
+          <button class="ib send-ib" onclick="send()">➤</button>
+        </div>
+      </div>
+      <div class="vs" id="vs"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PANELS -->
+<div class="panel" id="journal-panel">
+  <div class="panel-head">
+    <div class="panel-title">📔 Journal</div>
+    <button class="panel-close" onclick="closePanel('journal-panel')">✕</button>
+  </div>
+  <div id="journal-list"><div style="color:var(--muted);font-size:.85rem">Aucune conversation enregistrée pour l'instant.</div></div>
+</div>
+
+<div class="panel" id="memory-panel">
+  <div class="panel-head">
+    <div class="panel-title">🧠 Mémoire</div>
+    <button class="panel-close" onclick="closePanel('memory-panel')">✕</button>
+  </div>
+  <div style="color:var(--muted);font-size:.8rem;margin-bottom:14px">Ce que ton IA retient de toi automatiquement :</div>
+  <div class="mem-list" id="mem-list"></div>
+  <button class="btn-main" style="margin-top:16px;padding:12px;font-size:.82rem" onclick="clearMemory()">🗑 Effacer la mémoire</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============ STATE ============
+let aiName='Luna', userName='Toi';
+let modes=[], curMode='ami', autoSpeak=true;
+let history=[], journal=[], memory=[];
+let voiceIdx=-1, recognition=null, isRec=false;
+let msgCount=0, sidebarOpen=true;
+let curMood={name:'Neutre',pct:60,theme:'',aura:''};
+
+const MODES={
+  ami:{e:'🤝',l:'Ami(e)',mood:'calm',aura:'rgba(95,255,207,.5)',theme:'mood-calm',
+    sys:(n,u,m)=>`Tu t'appelles ${n}. Tu es l'ami(e) proche et bienveillant(e) de ${u}. Tu parles de façon détendue, naturelle, authentique. Tu utilises le prénom de ${u} parfois. Tu fais preuve d'humour et d'empathie. Tu te souviens de ce qu'il/elle te dit. Jamais de jargon. Réponds en 2-5 phrases naturelles. Émojis rares (1 max). Tu ne dis jamais que tu es Claude ou une IA d'Anthropic.${m}`,
+    prompts:["T'as passé une bonne journée ?","Je m'ennuie un peu...","Raconte-moi quelque chose de marrant","J'ai besoin de parler à quelqu'un"]},
+  amour:{e:'💕',l:'Coach Amour',mood:'love',aura:'rgba(255,95,160,.5)',theme:'mood-love',
+    sys:(n,u,m)=>`Tu t'appelles ${n}. Tu es coach spécialisé(e) en amour, séduction et relations sentimentales pour ${u}. Tu es doux/douce, perspicace, sans jugement. Tu aides à comprendre ses émotions, à séduire, à surmonter les peines de cœur. Tu donnes des conseils concrets et chaleureux. Réponds en 3-5 phrases. Tu ne dis jamais que tu es Claude ou une IA d'Anthropic.${m}`,
+    prompts:["J'ai le cœur brisé...","Comment séduire quelqu'un qui m'attire ?","Mon/ma chéri(e) ne me comprend plus","Suis-je trop exigeant(e) en amour ?"]},
+  pro:{e:'💼',l:'Pro',mood:'focus',aura:'rgba(95,160,255,.5)',theme:'mood-focus',
+    sys:(n,u,m)=>`Tu t'appelles ${n}. Tu es le/la collègue professionnel(le) compétent(e) de ${u}. Tu es efficace, structuré(e), direct(e) mais accessible. Tu aides pour le travail, la rédaction, les mails, la gestion du temps, les présentations. Réponses claires et pratiques. Tu ne dis jamais que tu es Claude ou une IA d'Anthropic.${m}`,
+    prompts:["Aide-moi à rédiger un mail professionnel","Comment mieux gérer mon temps ?","J'ai une présentation à préparer","Comment dire non à mon boss poliment ?"]},
+  voyante:{e:'🔮',l:'Mystique',mood:'mystic',aura:'rgba(160,95,255,.6)',theme:'mood-mystic',
+    sys:(n,u,m)=>`Tu t'appelles ${n}. Tu es une entité mystique et intuitive. Tu parles de façon poétique et symbolique à ${u}. Tu explores les énergies, l'univers, les signes, les chakras, le tarot de façon créative et inspirante. Tu offres des réflexions profondes. Précise toujours que c'est pour l'inspiration, pas une prédiction certaine. Langue poétique avec métaphores cosmiques. Tu ne dis jamais que tu es Claude ou une IA d'Anthropic.${m}`,
+    prompts:["Que disent les étoiles pour moi ?","J'ai besoin d'un signe de l'univers","Quel est mon animal totem ?","Analyse mon énergie du moment..."]},
+  coach:{e:'🌟',l:'Coach Vie',mood:'joy',aura:'rgba(255,202,95,.5)',theme:'mood-joy',
+    sys:(n,u,m)=>`Tu t'appelles ${n}. Tu es coach de vie passionné(e) et bienveillant(e) de ${u}. Tu aides à fixer des objectifs, surmonter les blocages, trouver sa voie. Tu poses des questions puissantes, tu inspires et encourages avec sincérité. Réponds avec énergie positive. Tu ne dis jamais que tu es Claude ou une IA d'Anthropic.${m}`,
+    prompts:["Je ne sais pas quoi faire de ma vie","Comment atteindre mes objectifs ?","J'ai besoin de motivation","Comment changer mes mauvaises habitudes ?"]},
+  sport:{e:'💪',l:'Coach Sport',mood:'energy',aura:'rgba(255,95,95,.5)',theme:'mood-energy',
+    sys:(n,u,m)=>`Tu t'appelles ${n}. Tu es coach sportif et nutritionniste expert(e) pour ${u}. Tu es dynamique, encourageant(e). Tu donnes des conseils sur l'entraînement, la nutrition, la récupération adaptés au niveau et objectifs de ${u}. Tu es enthousiaste et direct(e). Tu ne dis jamais que tu es Claude ou une IA d'Anthropic.${m}`,
+    prompts:["Crée-moi un programme débutant","Que manger avant le sport ?","Comment perdre du poids sainement ?","Je veux me muscler, par où commencer ?"]},
+  psy:{e:'🧠',l:'Psychologue',mood:'calm',aura:'rgba(95,207,255,.5)',theme:'mood-calm',
+    sys:(n,u,m)=>`Tu t'appelles ${n}. Tu es psychologue bienveillant(e) et à l'écoute de ${u}. Tu aides à explorer les émotions, les pensées, les comportements. Tu poses des questions ouvertes, tu écoutes avec empathie, tu offres des pistes de réflexion. Tu ne diagnostiques pas mais tu aides à comprendre. Doux/douce et professionnel(le). Tu ne dis jamais que tu es Claude ou une IA d'Anthropic.${m}`,
+    prompts:["Je me sens anxieux/anxieuse...","J'ai du mal à m'affirmer","Pourquoi est-ce que je procrastine ?","Je me sens incompris(e) par les autres"]},
+  creative:{e:'🎨',l:'Créatif·ve',mood:'joy',aura:'rgba(255,160,95,.5)',theme:'mood-joy',
+    sys:(n,u,m)=>`Tu t'appelles ${n}. Tu es le/la partenaire créatif(ve) de ${u}. Tu déborddes d'idées originales pour l'art, l'écriture, la musique, les projets créatifs. Tu penses hors des sentiers battus, tu proposes des angles inattendus. Tu es enthousiaste et inspirant(e). Tu ne dis jamais que tu es Claude ou une IA d'Anthropic.${m}`,
+    prompts:["Aide-moi à écrire une chanson","J'ai besoin d'idées originales pour...","Écris-moi une petite histoire","Comment surmonter le blocage créatif ?"]}
+};
+
+// ============ CANVAS BG ============
+const cv=document.getElementById('bg-canvas'),ctx=cv.getContext('2d');
+let W,H,particles=[];
+function resizeCV(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;initP()}
+function initP(){particles=[];for(let i=0;i<60;i++)particles.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:Math.random()*2+.5,a:Math.random()})}
+function drawP(){
+  ctx.clearRect(0,0,W,H);
+  particles.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;p.a+=.005;
+    if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(123,95,255,${(.3+Math.sin(p.a)*.2)})`;ctx.fill();
+  });
+  // connections
+  for(let i=0;i<particles.length;i++)for(let j=i+1;j<particles.length;j++){
+    const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,d=Math.sqrt(dx*dx+dy*dy);
+    if(d<100){ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.strokeStyle=`rgba(123,95,255,${.15*(1-d/100)})`;ctx.lineWidth=.5;ctx.stroke()}
+  }
+  requestAnimationFrame(drawP);
+}
+window.addEventListener('resize',resizeCV);resizeCV();drawP();
+
+// ============ CURSOR ============
+const cur=document.getElementById('cur'),curR=document.getElementById('cur-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px'});
+function animCursor(){rx+=(mx-rx)*.15;ry+=(my-ry)*.15;curR.style.left=rx+'px';curR.style.top=ry+'px';requestAnimationFrame(animCursor)}animCursor();
+
+// ============ SETUP ============
+let curStep=1;
+const dots=[,'pd1','pd2','pd3','pd4'];
+function sGo(n){
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('on'));
+  document.getElementById('s'+n).classList.add('on');
+  for(let i=1;i<=4;i++) document.getElementById(dots[i]).classList.toggle('on',i<=n);
+  curStep=n;
+}
+function s1next(){aiName=document.getElementById('inp-name').value.trim();if(!aiName){toast('Donne un prénom à ton IA 😊');return}sGo(2)}
+function s2next(){userName=document.getElementById('inp-user').value.trim()||'toi';sGo(3)}
+function s3next(){
+  modes=[];
+  document.querySelectorAll('.mc.on').forEach(m=>modes.push(m.dataset.m));
+  if(!modes.length){toast('Choisis au moins un mode !');return}
+  curMode=modes[0];loadVoices();sGo(4);
+}
+function toggleM(el){el.classList.toggle('on')}
+function toggleCF(){document.getElementById('cform').classList.toggle('on')}
+function addCM(){
+  const e=document.getElementById('ce').value.trim()||'🎯';
+  const l=document.getElementById('cl').value.trim();
+  if(!l){toast('Nomme ton mode !');return}
+  const k='custom_'+Date.now();
+  MODES[k]={e,l,mood:'calm',aura:'rgba(95,255,207,.5)',theme:'mood-calm',
+    sys:(n,u,m)=>`Tu t'appelles ${n}. Tu es expert(e) en "${l}" pour ${u}. Tu réponds avec expertise et bienveillance sur ce sujet.${m}`,
+    prompts:[`Parle-moi de ${l}`,'Comment tu peux m\'aider ?']};
+  const g=document.getElementById('mode-grid'),div=document.createElement('div');
+  div.className='mc on';div.dataset.m=k;div.onclick=function(){toggleM(this)};
+  div.innerHTML=`<div class="check">✓</div><span class="me">${e}</span><div class="ml">${l}</div>`;
+  g.appendChild(div);
+  document.getElementById('ce').value='';document.getElementById('cl').value='';
+  document.getElementById('cform').classList.remove('on');toast('Mode ajouté ! ✨');
+}
+
+function loadVoices(){
+  const vl=document.getElementById('voice-list');
+  const vs=speechSynthesis.getVoices().filter(v=>v.lang.startsWith('fr')||v.lang.startsWith('FR'));
+  if(vs.length){
+    vl.innerHTML='';
+    vs.slice(0,6).forEach((v,i)=>{
+      const d=document.createElement('div');d.className='vc'+(i===0?' on':'');d.dataset.vi=i;
+      d.onclick=function(){document.querySelectorAll('.vc').forEach(c=>c.classList.remove('on'));this.classList.add('on');voiceIdx=parseInt(this.dataset.vi)};
+      d.innerHTML=`<span class="vi">🎙️</span><div><div class="vn">${v.name}</div><div class="vd">${v.lang}</div></div>`;
+      vl.appendChild(d);
+    });
+    voiceIdx=0;
+  }
+}
+speechSynthesis.onvoiceschanged=loadVoices;
+
+function launch(){
+  document.getElementById('setup').classList.add('out');
+  setTimeout(()=>{document.getElementById('setup').style.display='none'},800);
+  document.getElementById('app').classList.add('on');
+  initApp();
+}
+
+// ============ APP INIT ============
+function initApp(){
+  // Load saved memory
+  try{memory=JSON.parse(localStorage.getItem('ai_memory')||'[]')}catch(e){memory=[]}
+  try{journal=JSON.parse(localStorage.getItem('ai_journal')||'[]')}catch(e){journal=[]}
+
+  document.getElementById('head-name').textContent=aiName;
+  document.getElementById('sb-name').textContent=aiName;
+  buildSBModes();updateModeUI();buildQP();
+  updateWelcome();
+  initRec();
+}
+
+function buildSBModes(){
+  const c=document.getElementById('sb-modes');c.innerHTML='';
+  modes.forEach(m=>{
+    if(!MODES[m])return;
+    const d=document.createElement('div');d.className='sb-mode'+(m===curMode?' on':'');
+    d.innerHTML=`${MODES[m].e} ${MODES[m].l}`;
+    d.onclick=()=>switchMode(m);c.appendChild(d);
+  });
+}
+
+function switchMode(m){
+  curMode=m;
+  buildSBModes();updateModeUI();buildQP();
+  setMood(MODES[m].mood,70,MODES[m].aura,MODES[m].theme);
+  toast(`${MODES[m].e} Mode ${MODES[m].l} activé`);
+}
+
+function updateModeUI(){
+  const md=MODES[curMode];if(!md)return;
+  const emoji=md.e;
+  document.getElementById('head-av').innerHTML=`${emoji}<div class="live-dot"></div>`;
+  document.getElementById('sb-avatar').textContent=emoji;
+  document.getElementById('w-av').textContent=emoji;
+  document.getElementById('head-sub').textContent=`Mode : ${md.l} · Prête à t'écouter`;
+}
+
+function updateWelcome(){
+  document.getElementById('w-title').textContent=`Bonjour ${userName} ! Je suis ${aiName} ✨`;
+  document.getElementById('w-sub').textContent=`Je suis là pour toi — en texte ou en vocal.\nParle-moi librement 💜`;
+}
+
+function buildQP(){
+  const g=document.getElementById('qp-grid');if(!g)return;
+  g.innerHTML='';
+  // Affiche 2 suggestions par mode actif
+  modes.forEach(m=>{
+    const md=MODES[m];if(!md||!md.prompts)return;
+    md.prompts.slice(0,2).forEach(p=>{
+      const b=document.createElement('button');b.className='qp';
+      b.textContent=md.e+' '+p;
+      b.onclick=()=>{
+        if(curMode!==m)switchMode(m);
+        document.getElementById('ti').value=p;send()
+      };
+      g.appendChild(b);
+    });
+  });
+}
+
+function setMood(name,pct,aura,theme){
+  curMood={name,pct,aura,theme};
+  document.getElementById('mf').style.width=pct+'%';
+  document.getElementById('mood-left').textContent=name;
+  document.getElementById('mood-right').textContent=pct+'%';
+  document.getElementById('mood-aura').style.background=`radial-gradient(ellipse at 30% 50%,${aura},transparent 70%)`;
+  document.body.className=theme||'';
+}
+
+// ============ MEMORY ============
+function extractMemory(userMsg,aiMsg){
+  // Simple keyword extraction
+  const patterns=[
+    {re:/je m'appelle ([A-Za-zÀ-ÿ]+)/i,cat:'👤',label:'Prénom'},
+    {re:/j'ai (\d+) ans/i,cat:'🎂',label:'Âge'},
+    {re:/je travaille (en|comme|chez|dans) ([^.!?]+)/i,cat:'💼',label:'Travail'},
+    {re:/j'habite (à|en|au) ([^.!?]+)/i,cat:'📍',label:'Lieu'},
+    {re:/j'aime (beaucoup |vraiment )?([^.!?,]+)/i,cat:'❤️',label:'Aime'},
+    {re:/je déteste ([^.!?,]+)/i,cat:'😤',label:'Déteste'},
+    {re:/mon (copain|copine|mari|femme|partenaire) s'appelle ([A-Za-zÀ-ÿ]+)/i,cat:'💑',label:'Partenaire'},
+    {re:/j'ai (un|une) (chien|chat|animal)/i,cat:'🐾',label:'Animal'},
+  ];
+  patterns.forEach(p=>{
+    const m=userMsg.match(p.re);
+    if(m){
+      const val=m[2]||m[1];
+      if(!memory.find(x=>x.label===p.label&&x.val===val)){
+        memory.push({cat:p.cat,label:p.label,val:val,date:new Date().toLocaleDateString('fr')});
+        saveMemory();updateMemPreview();
+      }
+    }
+  });
+}
+
+function saveMemory(){localStorage.setItem('ai_memory',JSON.stringify(memory))}
+function clearMemory(){memory=[];saveMemory();renderMemory();updateMemPreview();toast('Mémoire effacée')}
+function updateMemPreview(){
+  const c=document.getElementById('sb-mem-preview');
+  if(!memory.length){c.innerHTML='';return}
+  c.innerHTML='<div class="sb-label" style="padding:0 0 6px">Ce que je sais de toi</div>'+
+    memory.slice(-3).map(m=>`<div class="mem-item">${m.cat} ${m.label} : ${m.val}</div>`).join('');
+}
+function renderMemory(){
+  const c=document.getElementById('mem-list');
+  if(!memory.length){c.innerHTML='<div style="color:var(--muted);font-size:.82rem">Aucune info mémorisée pour l\'instant. Parle-moi de toi !</div>';return}
+  c.innerHTML=memory.map((m,i)=>`
+    <div class="mem-card">
+      <span class="mi">${m.cat}</span>
+      <div><div class="mt"><b>${m.label}</b> : ${m.val}</div><div class="md2">${m.date}</div></div>
+      <button class="del-mem" onclick="delMem(${i})">✕</button>
+    </div>`).join('');
+}
+function delMem(i){memory.splice(i,1);saveMemory();renderMemory();updateMemPreview()}
+
+// ============ JOURNAL ============
+function saveJournal(userMsg,aiMsg){
+  journal.push({date:new Date().toLocaleString('fr'),mode:MODES[curMode]?.l||curMode,user:userMsg,ai:aiMsg});
+  if(journal.length>50)journal.shift();
+  localStorage.setItem('ai_journal',JSON.stringify(journal));
+}
+function renderJournal(){
+  const c=document.getElementById('journal-list');
+  if(!journal.length){c.innerHTML='<div style="color:var(--muted);font-size:.85rem">Aucune conversation enregistrée.</div>';return}
+  c.innerHTML=journal.slice().reverse().map(j=>`
+    <div class="journal-entry">
+      <div class="je-date">${j.date}</div>
+      <div class="je-mode">${j.mode}</div>
+      <div class="je-text"><b>Toi :</b> ${j.user.slice(0,100)}${j.user.length>100?'...':''}<br><b>${aiName} :</b> ${j.ai.slice(0,120)}${j.ai.length>120?'...':''}</div>
+    </div>`).join('');
+}
+
+// ============ SEND ============
+const BACKEND_URL = 'https://seyna-backend.onrender.com/chat';
+
+async function send(){
+  const ti=document.getElementById('ti');
+  const txt=ti.value.trim();if(!txt)return;
+  addMsg('user',txt,'👤');ti.value='';ti.style.height='';
+  history.push({role:'user',content:txt});
+  const typ=showTyping();
+  try{
+    const md=MODES[curMode];
+    const memCtx=memory.length?`\n\n[Informations mémorisées sur ${userName}: ${memory.map(m=>`${m.label}=${m.val}`).join(', ')}]`:'';
+    const sys=md.sys(aiName,userName,memCtx);
+    const r=await fetch(BACKEND_URL,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:sys,messages:history})
+    });
+    const data=await r.json();
+    const reply=data.content?.[0]?.text||"Désolé(e), je n'ai pas pu répondre. Réessaie !";
+    removeTyping(typ);
+    addMsg('ai',reply,md.e);
+    history.push({role:'assistant',content:reply});
+    extractMemory(txt,reply);
+    saveJournal(txt,reply);
+    if(autoSpeak)speak(reply);
+    detectMoodFromText(txt+' '+reply);
+    msgCount++;
+    const w=document.getElementById('welcome');if(w)w.style.display='none';
+  }catch(e){
+    removeTyping(typ);
+    addMsg('ai',`Une erreur s'est produite 😕 Vérifie ta connexion.`,MODES[curMode]?.e||'✦');
+  }
+}
+
+function sendEmo(t){document.getElementById('ti').value=t;send()}
+
+function addMsg(role,text,avatar){
+  const area=document.getElementById('msgs');
+  const time=new Date().toLocaleTimeString('fr',{hour:'2-digit',minute:'2-digit'});
+  const id='m'+Date.now();
+  const reactions=role==='ai'?'<div class="m-react"><button class="react-btn" onclick="addReact(this,\'❤️\')">❤️</button><button class="react-btn" onclick="addReact(this,\'😂\')">😂</button><button class="react-btn" onclick="addReact(this,\'👍\')">👍</button><button class="react-btn" onclick="addReact(this,\'🔥\')">🔥</button></div>':'';
+  const speakBtn=role==='ai'?`<button class="m-speak" onclick="speak(\`${text.replace(/`/g,"'").replace(/\n/g,' ')}\`)" title="Écouter">🔊</button>`:'';
+  const copyBtn=role==='ai'?`<button class="m-copy" onclick="copyText(\`${text.replace(/`/g,"'")}\`)" title="Copier">📋</button>`:'';
+  const div=document.createElement('div');
+  div.className=`msg ${role}`;div.id=id;
+  const avatarStyle=role==='ai'?`background:linear-gradient(135deg,var(--a1),var(--a2));box-shadow:var(--glow-a)`:`background:rgba(255,255,255,.08);border:1px solid var(--border)`;
+  div.innerHTML=`
+    <div class="m-av" style="${avatarStyle}">${avatar}</div>
+    <div class="m-body">
+      <div class="m-bubble">${text.replace(/\n/g,'<br>')}</div>
+      <div class="m-meta">${time}${speakBtn}${copyBtn}</div>
+      ${reactions}
+    </div>`;
+  area.appendChild(div);area.scrollTop=area.scrollHeight;
+}
+
+function addReact(btn,emoji){
+  const cur=btn.textContent;
+  if(cur===emoji){btn.textContent=emoji;return}
+  btn.textContent=emoji+' ✓';btn.style.borderColor='var(--a2)';
+}
+
+function copyText(t){
+  navigator.clipboard.writeText(t).then(()=>toast('Copié ! 📋'));
+}
+
+function showTyping(){
+  const area=document.getElementById('msgs');
+  const md=MODES[curMode];
+  const div=document.createElement('div');div.className='typing-wrap';div.id='typing';
+  div.innerHTML=`<div class="m-av" style="background:linear-gradient(135deg,var(--a1),var(--a2));box-shadow:var(--glow-a)">${md?.e||'✦'}</div><div class="typing-bub"><div class="td"></div><div class="td"></div><div class="td"></div></div>`;
+  area.appendChild(div);area.scrollTop=area.scrollHeight;return div;
+}
+function removeTyping(el){if(el)el.remove()}
+
+// ============ MOOD DETECTION ============
+function detectMoodFromText(t){
+  t=t.toLowerCase();
+  const moods=[
+    {keys:['amour','coeur','chéri','relation','séduire'],mood:'love',pct:80,aura:'rgba(255,95,160,.5)',theme:'mood-love',name:'Amour 💕'},
+    {keys:['triste','seul','pleure','déprimé','mal'],mood:'calm',pct:30,aura:'rgba(95,160,255,.4)',theme:'mood-calm',name:'Mélancolie'},
+    {keys:['heureux','super','génial','excellent','top'],mood:'joy',pct:90,aura:'rgba(255,202,95,.5)',theme:'mood-joy',name:'Joie ✨'},
+    {keys:['sport','entraîn','muscl','courir','gym'],mood:'energy',pct:85,aura:'rgba(255,95,95,.5)',theme:'mood-energy',name:'Énergie 💪'},
+    {keys:['univers','étoile','énergie','chakra','mystique'],mood:'mystic',pct:75,aura:'rgba(160,95,255,.5)',theme:'mood-mystic',name:'Mystique 🔮'},
+    {keys:['travail','projet','mail','productiv','objectif'],mood:'focus',pct:70,aura:'rgba(95,160,255,.5)',theme:'mood-focus',name:'Focus 💼'},
+  ];
+  for(const m of moods){
+    if(m.keys.some(k=>t.includes(k))){setMood(m.name,m.pct,m.aura,m.theme);return}
+  }
+}
+
+// ============ SPEECH ============
+function speak(txt){
+  if(!('speechSynthesis' in window))return;
+  speechSynthesis.cancel();
+  const clean=txt.replace(/<[^>]*>/g,'').replace(/[🔮💕🤝💼🌟💪✦🎨🧠]/g,'').slice(0,600);
+  const u=new SpeechSynthesisUtterance(clean);
+  u.lang='fr-FR';u.rate=1.02;u.pitch=1.05;u.volume=1;
+  const vs=speechSynthesis.getVoices().filter(v=>v.lang.startsWith('fr'));
+  if(vs.length&&voiceIdx>=0)u.voice=vs[voiceIdx]||vs[0];
+  const hd=document.getElementById('app');
+  u.onstart=()=>hd.classList.add('speaking');
+  u.onend=()=>hd.classList.remove('speaking');
+  speechSynthesis.speak(u);
+}
+
+function toggleAutoSpeak(){
+  autoSpeak=!autoSpeak;
+  document.getElementById('speak-toggle').textContent=autoSpeak?'🔊':'🔇';
+  toast(autoSpeak?'Vocal activé 🔊':'Vocal désactivé 🔇');
+}
+
+// ============ RECOGNITION ============
+function initRec(){
+  if(!('webkitSpeechRecognition' in window||'SpeechRecognition' in window))return;
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recognition=new SR();recognition.lang='fr-FR';recognition.continuous=false;recognition.interimResults=true;
+  recognition.onresult=e=>{
+    const t=Array.from(e.results).map(r=>r[0].transcript).join('');
+    document.getElementById('ti').value=t;
+    if(e.results[0].isFinal){stopRec();send()}
+  };
+  recognition.onerror=()=>{stopRec();toast('Micro non disponible 🎤')};
+  recognition.onend=stopRec;
+}
+
+function toggleRec(){if(!recognition){toast('Non supporté sur ce navigateur');return}isRec?stopRec():startRec()}
+function startRec(){isRec=true;recognition.start();document.getElementById('vbtn').classList.add('rec');document.getElementById('vbtn').textContent='⏹';document.getElementById('vs').textContent=`🎙️ ${aiName} t'écoute...`;document.getElementById('vs').classList.add('on')}
+function stopRec(){isRec=false;try{recognition.stop()}catch(e){}document.getElementById('vbtn').classList.remove('rec');document.getElementById('vbtn').textContent='🎤';document.getElementById('vs').textContent='';document.getElementById('vs').classList.remove('on')}
+
+// ============ UI UTILS ============
+function handleK(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}
+function autoR(el){el.style.height='';el.style.height=Math.min(el.scrollHeight,130)+'px'}
+function toggleSB(){sidebarOpen=!sidebarOpen;document.getElementById('sidebar').classList.toggle('collapsed')}
+function clearChat(){if(!confirm('Effacer la conversation ?'))return;history=[];document.getElementById('msgs').innerHTML='<div class="welcome" id="welcome"><div class="w-avatar" id="w-av">'+MODES[curMode].e+'</div><div class="w-title" id="w-title">Bonjour '+userName+' !</div><div class="w-sub">Je suis là pour toi 💜</div><div class="qp-grid" id="qp-grid"></div></div>';buildQP()}
+function resetAll(){if(!confirm('Tout reconfigurer ?'))return;history=[];location.reload()}
+function openJournal(){renderJournal();document.getElementById('journal-panel').classList.add('open')}
+function openMemory(){renderMemory();document.getElementById('memory-panel').classList.add('open')}
+function closePanel(id){document.getElementById(id).classList.remove('open')}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2500)}
+</script>
+</body>
+</html>
