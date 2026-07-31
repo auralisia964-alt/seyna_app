@@ -202,6 +202,16 @@ export default function PricingPage() {
                   <span className="text-white/50 text-sm">{cycle.suffix}</span>
                 </div>
 
+                <div className="h-5 mb-1">
+                  {cycle.id !== 'mensuel' && (
+                    <span className="text-[11px] text-green-400 font-medium transition-all duration-300">
+                      Facturé {price * (cycle.id === 'trimestriel' ? 3 : 12)}€ /{' '}
+                      {cycle.id === 'trimestriel' ? '3 mois' : 'an'} · économie{' '}
+                      {Math.round((1 - cycle.mult) * 100)}%
+                    </span>
+                  )}
+                </div>
+
                 <p className="text-white/50 text-sm mt-2 mb-4 leading-relaxed">{plan.benefit}</p>
 
                 <div className="text-xs font-medium text-purple-300 mb-5">
